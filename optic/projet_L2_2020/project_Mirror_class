@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Feb 19 14:01:54 2020
+
+@author: paulcalvi
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+import sympy
+
+
+
+
+#MY OBJECT---------------------------------------------------------
+class Mirror :
+    """
+    class which creats a mirror object with it own shape caracteristics
+    centred around 0. 
+    
+    diam_ouv : miroor highter. (float)
+    type_m : concave or convexe. (str)
+    r : radius of the caracteristic cercle of the mirror.(float) 
+
+    """
+    
+    def __init__(self, r = 4, diam_ouv = 6,type_m = 'concave'):
+        
+        self.diam_ouv = diam_ouv 
+        self.r = r
+        self.type_m = type_m
+
+        
+    def shape(self):
+        """
+        shape of mirror
+        """
+        if self.type_m  == 'concave':
+            self.name = 'mirroir concave'
+            angle_ouv = np.arcsin((self.diam_ouv)/(2*self.r))
+            theta = np.linspace((np.pi/2)-angle_ouv, (np.pi/2)+angle_ouv)
+            self.Yc = -self.r*np.cos(theta)
+            self.Xc = self.r*np.sin(theta)
+
+        if  self.type_m == 'convexe' : 
+            self.name = 'mirroir convexe'
+            angle_ouv = np.arcsin((self.diam_ouv)/(2*self.r))
+            theta = np.linspace(-np.pi/2-angle_ouv, -np.pi/2+angle_ouv)
+            self.Yc = -self.r*np.cos(theta)
+            self.Xc = self.r*np.sin(theta)
+   
+        else :
+           return 'error'
+       
+
+      
+#RAYS ---------------------------------------------------------     
+class Beam: 
+    """
+    Beam creat N rays in a L_beam interval centred in 0. 
+    Space : x space. (array)
+    Nb : Number of ray in one beam. (int)
+    L_beam : Beam's larger. (float)
+    """
+    
+    def __init__(self, L_beam=3, objet = Mirror(),  Nb = 3, color = 'red'):
+        
+        self.L_beam = L_beam
+        if isinstance(objet, Mirror):
+            self.type_m = objet.type_m
+            self.r = objet.r
+        self.Nb = Nb
+        self.Xo = np.linspace(-10,10,100)
+        self.color = color
+
+    def ray(self):
+        
+        if self.type_m =='concave':
+            self.Ray_i = []
+            self.Ray_r = []
+            self.lst_sol = []
+            self. X_bef_lst = []
+            for n in range(self.Nb):
+                x, y = sympy.symbols('x,y')
+                eq1 = x**2+y**2-self.r**2
+                eq2 = -y+n*(self.L_beam/self.Nb)
+                sol = sympy.solve([eq1,eq2], [x,y])
+                self.lst_sol.append(sol) #liste de solution [[(x1,y1),(x2,y2)],...,[(x, y),(x, y)]]
+                
+                self.x_sol = float(self.lst_sol[n][1][0]) 
+                self.y_sol = float(self.lst_sol[n][1][1]) 
+                
+                self.X_bef = np.linspace(np.min(self.Xo),float(self.lst_sol[n][1][0]) ,100) 
+                self.X_bef_lst.append(self.X_bef)
+                
+                
+                ray_i = self.X_bef_lst[n]*0+(self.L_beam/self.Nb)*n
+                ray_r = self.X_bef_lst[n]*2*(self.y_sol/self.x_sol)-(self.L_beam/self.Nb)*n
+ 
+                self.Ray_i.append([ray_i, -ray_i])
+                self.Ray_r.append([ray_r, -ray_r])
+                
+         
+        if self.type_m =='convexe':
+            self.Ray_i = []
+            self.Ray_r = []
+            self.lst_sol = []
+            self. X_bef_lst = []
+            for n in range(self.Nb):
+                x, y = sympy.symbols('x,y')
+                eq1 = x**2+y**2-self.r**2
+                eq2 = -y+n*(self.L_beam/self.Nb)
+                sol = sympy.solve([eq1,eq2], [x,y])
+                self.lst_sol.append(sol) #liste de solution [[(x1,y1),(x2,y2)],...,[(x, y),(x, y)]]
+                
+                self.x_sol = float(self.lst_sol[n][0][0]) 
+                self.y_sol = float(self.lst_sol[n][0][1]) 
+                
+                self.X_bef = np.linspace(np.min(self.Xo),float(self.lst_sol[n][0][0]) ,100) 
+                self.X_bef_lst.append(self.X_bef)
+                
+                
+                ray_i = self.X_bef_lst[n]*0+(self.L_beam/self.Nb)*n
+                ray_r = self.X_bef_lst[n]*2*(self.y_sol/self.x_sol)-(self.L_beam/self.Nb)*n
+
+
+                self.Ray_i.append([ray_i, -ray_i])
+                self.Ray_r.append([ray_r, -ray_r])
+                
+
+
+            
+        
+           
+#MY FIGURE------------------------------------------------   
+        
+class Fig :
+    """
+    objet = Mirror() or Lent()
+    beam = Beam()
+    
+    permit to creat a fig with the stuff we need 
+    """
+    
+    
+    def __init__(self, objet, beam ):
+        if isinstance(objet, Mirror):
+            self.objet = objet
+        if isinstance(beam, Beam):
+            self.beam = beam
+            
+    def plot(self):
+        fig, ax = plt.subplots()
+        ax.set_xlim(-10, 10)
+        ax.set_ylim(-10, 10)
+       # ax.set_title("effet d'un {} sur des rayons à l'infini".format(self.objet.shape(self.name)))
+
+        ax.plot(self.objet.Xc,self.objet.Yc , color = 'black')
+        ax.plot(self.beam.Xo, 0*self.beam.Xo,  '--', color = 'gray')
+        ax.plot(0, 0, 'o', color = 'black', label = 'C')
+        if self.beam.Nb<20:
+            self.alpha = 0.4
+        if self.beam.Nb >= 20:
+            self.alpha = 0.1
+        for i in range(self.beam.Nb):
+            #ax.plot(float(self.beam.lst_sol[i][0][0]),float( self.beam.lst_sol[i][0][1]), 'o')
+            ax.plot(self.beam.X_bef_lst[i],self.beam.Ray_i[i][0], color = self.beam.color, alpha = self.alpha)
+            ax.plot(self.beam.X_bef_lst[i],self.beam.Ray_i[i][1], color = self.beam.color, alpha = self.alpha)
+            ax.plot(self.beam.X_bef_lst[i],self.beam.Ray_r[i][0], color = self.beam.color, alpha = self.alpha)
+            ax.plot(self.beam.X_bef_lst[i],self.beam.Ray_r[i][1], color = self.beam.color, alpha = self.alpha)
+            #ax.plot(self.beam.x_sol, self.beam.y_sol, 'o')
+        #ax.tarrow([x, Yo, 13, 0, head_width=0.5, head_length=0.5, fc='k', ec='k') 
+        ax.legend()
+        ax.plot()
+
+        plt.show()
+        
+        
+#TEST------------------------------------------------          
+        
+if __name__ == "__main__":
+    Xo = np.linspace(-100,100,1000)
+    obj = Mirror(type_m = 'concave')
+    obj.shape()
+    beam = Beam(3, obj, 25)
+    beam.ray()
+    fig = Fig(obj, beam)
+    fig.plot()
+    

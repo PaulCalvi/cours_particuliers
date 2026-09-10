@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Mar  6 15:46:15 2020
+
+@author: paulcalvi
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+import sympy
+
+Xo = np.linspace(-10,10,1000)
+theta = np.linspace(0,2*np.pi,1000)
+Xc = 2*np.cos(theta)
+Yc = 2*np.sin(theta)
+
+def Ray(Nb=5, L_Beam = 1, type_m = 'concave'):
+    
+    """
+    create the incident ray.
+    Nb : nomber of ray. (int)
+    L_Beam : larger of the beam. (float)
+    type_m : type of the mirror (concave or convexe). (str)
+    """
+    
+    
+    lst_sol = []
+    Ray = []
+    for n in range(Nb):
+        
+        x, y = sympy.symbols('x,y')
+        eq1 = x**2+y**2-2**2
+        eq2 = 0*x-y+n*(L_Beam/Nb)
+        sol = sympy.solve([eq1,eq2], [x,y])
+        lst_sol.append(sol) #liste de solution [[(x1,y1),(x2,y2)],...,[(x, y),(x, y)]]
+        
+        X_grp = []
+        
+        if type_m == 'concave':
+        
+            for x in Xo:
+                if x<=lst_sol[n][1][0] :
+                    ray = x*0+(L_Beam/Nb)*n
+                if x>=lst_sol[n][1][0]:
+                    ray = x*0
+                    
+                X_grp.append(ray)
+                
+        if type_m == 'convexe':
+            
+            for x in Xo:
+                if x<=lst_sol[n][0][0] :
+                    ray = x*0+(L_Beam/Nb)*n
+                if x>=lst_sol[n][0][0]:
+                    ray = x*0
+        
+                
+                X_grp.append(ray)
+            
+        Ray.append(X_grp)
+        
+    return Ray
+
+
+beam = Ray(type_m  = 'concave')
+fig, ax = plt.subplots()
+for i in range(5):
+    ax.plot(Xo,beam[i], color='green')
+ax.plot(Xc,Yc, color = 'gray')
+plt.show()
